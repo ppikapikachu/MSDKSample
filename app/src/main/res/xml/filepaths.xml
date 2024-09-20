@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--乍一看貌似没什么问题，path设置的是external的根路径，对应Environment.getExternalStorageDirectory()，
+然而这个方法所获取的只是内置SD卡的路径，所以当选择的相册中的图片是外置SD卡的时候，就查找不到图片地址了，
+因此便抛出了failed to find configured root that contains的错误。-->
+
+<!--<paths xmlns:android="http://schemas.android.com/apk/res/android">-->
+<!--    <external-path name="external" path=""/>-->
+<!--</paths>-->
+
+<!--文件的搜索路径已经变成了我们客户端的整个根路径-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <root-path name="external" path=""/>
+</paths>

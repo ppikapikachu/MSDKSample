@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="sendVedioStreamFun">
+        <item>sendVideoStream</item>
+        <item>sendVideoWithARInfo</item>
+        <item>sendVideoWithARInfoX</item>
+        <item>sendVideoWithARInfoToLocal</item>
+    </string-array>
+    <string name="startSendVedioStream">开始发流</string>
+    <string name="stopSendVedioStream">结束发流</string>
+    <string name="startCompensate">开启补偿</string>
+    <string name="stopCompensate">关闭补偿</string>
+</resources>

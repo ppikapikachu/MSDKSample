@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.msdksample">
+    <!-- 参照添加 SDK 需要的最基础权限。 -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.usb.accessory"
+        android:required="true" />
+
+    <application
+        android:name=".MyApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/芜湖"
+        android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MSDKSample"
+        tools:targetApi="31">
+        <activity
+            android:name=".MainActivity1"
+            android:exported="false" />
+
+        <service
+            android:name=".MyService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity
+            android:name=".GaoTest"
+            android:exported="false" />
+        <activity
+            android:name=".MyLayoutActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/full_screen_theme" />
+        <activity
+            android:name=".Rtmp"
+            android:exported="false" />
+        <activity
+            android:name=".Gimbal"
+            android:exported="false" />
+
+        <meta-data
+            android:name="com.dji.sdk.API_KEY"
+            android:value="9561865df7e58c1210a76438" /> <!-- <activity>标签是一个活动（Activity），通常代表一个屏幕或用户界面的一个部分。 -->
+        <!-- Maplibre Token -->
+        <meta-data
+            android:name="com.dji.mapkit.maplibre.apikey"
+            android:value="${MAPLIBRE_TOKEN}" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+
+            <!--
+                <intent-filter> 用于声明活动响应的意图（Intent）。这些意图定义了触发活动启动的条件，
+                    如 MAIN 和 LAUNCHER 意图用于定义应用程序的入口点。所以在这里加这个标签的意思就是，这个页面将会变成打开应用以后第一个显示的页面。
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+
+                <!-- 新增，在 activity 标签中配置 USB 配件通知。 -->
+                <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
+            </intent-filter>
+            <!-- 在 activity 标签中配置 USB 配件通知。 -->
+            <meta-data
+                android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
+                android:resource="@xml/accessory_filter" />
+        </activity>
+        <activity
+            android:name="dji.v5.ux.sample.showcase.defaultlayout.DefaultLayoutActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/full_screen_theme" /> <!-- 在官方7.0的以上的系统中，尝试传递 file://URI可能会触发FileUriExposedException，所以需要用到FileProvider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
+        </provider>
+    </application>
+
+</manifest>

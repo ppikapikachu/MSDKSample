@@ -1,0 +1,7 @@
+<resources>
+    <string name="芜湖">SDKSampleKotlin</string>
+
+    <string name="uxsdk_widget_default_ratio" translatable="false">W,1:1</string>
+    <string name="uxsdk_widget_camera_controls_ratio" translatable="false">W,1:4</string>
+
+</resources>

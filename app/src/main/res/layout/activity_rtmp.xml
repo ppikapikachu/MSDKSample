@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/sendVideoStream"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="false"
+        android:layout_marginLeft="20px"
+        android:layout_marginTop="60px"
+        android:enabled="true"
+        android:text="sendVideoStream"
+        android:textAllCaps="false"></Button>
+
+    <Button
+        android:id="@+id/sendVideoWithARInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="false"
+        android:layout_margin="10px"
+        android:enabled="true"
+        android:text="sendVideoWithARInfo"
+        android:textAllCaps="false"></Button>
+
+    <Button
+        android:id="@+id/sendVideoWithARInfoX"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="false"
+        android:layout_margin="10px"
+        android:enabled="true"
+        android:text="sendVideoWithARInfoX"
+        android:textAllCaps="false"></Button>
+
+    <Button
+        android:id="@+id/sendVideoWithARInfoToLocal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="false"
+        android:layout_margin="10px"
+        android:enabled="true"
+        android:text="sendVideoWithARInfoToLocal"
+        android:textAllCaps="false"></Button>
+
+    <Button
+        android:id="@+id/stopWriteStream"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="false"
+        android:layout_margin="10px"
+        android:enabled="true"
+        android:text="stopWriteStream"
+        android:textAllCaps="false"></Button>
+</LinearLayout>

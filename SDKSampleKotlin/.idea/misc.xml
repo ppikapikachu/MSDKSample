@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/android-sdk-v5-uxsdk/src/main/res/drawable-anydpi-v24/uxsdk_ic_arrow_down.xml" value="0.191" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/android-sdk-v5-uxsdk/src/main/res/drawable/uxsdk_fpv_hsi_waypoint.xml" value="0.191" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/android-sdk-v5-uxsdk/src/main/res/layout/uxsdk_activity_default_layout.xml" value="0.2" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/android-sdk-v5-uxsdk/src/main/res/layout/uxsdk_activity_widgets.xml" value="0.2994791666666667" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/android-sdk-v5-uxsdk/src/main/res/layout/uxsdk_camera_lens_control_widget.xml" value="0.2994791666666667" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/android-sdk-v5-uxsdk/src/main/res/layout/uxsdk_dialog_fly_zone.xml" value="0.1828125" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/android-sdk-v5-uxsdk/src/main/res/layout/uxsdk_expose_focus_view.xml" value="0.1828125" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/android-sdk-v5-uxsdk/src/main/res/layout/uxsdk_fpv_pfd_attitude_display_widget.xml" value="0.1828125" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout-land/activity_main.xml" value="0.264" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_dashbord.xml" value="0.2984375" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_gao_test.xml" value="0.2994791666666667" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_gimbal.xml" value="0.152" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_home.xml" value="0.1" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_homepage.xml" value="0.12395833333333334" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_main.xml" value="0.2" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_my_layout.xml" value="0.176" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_my_layout1.xml" value="0.16041666666666668" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_rtmp.xml" value="0.12395833333333334" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_uploadKMZ.xml" value="0.1828125" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/activity_uploadkmz.xml" value="0.19427083333333334" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/rtmp.xml" value="0.10170940170940171" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/temp.xml" value="0.12135416666666667" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/layout/wwww.xml" value="0.15" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.172" />
+        <entry key="..\:/AndroidProject/SDKSampleKotlin/app/src/main/res/xml/filepaths.xml" value="0.1828125" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>
