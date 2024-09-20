@@ -267,7 +267,7 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
 //        设置镜头分辨率，降低分辨率
         List<VideoResolutionFrameRate> VList = Movement.getInstance().getKeyVideoResolutionFrameRateRange();
         Log.i(TAG, VList + "==============");
-//
+//    
         VideoResolutionFrameRate v = VList.get(0);
         KeyManager.getInstance().setValue(KeyTools.createKey(CameraKey.KeyVideoResolutionFrameRate), v, new CommonCallbacks.CompletionCallback() {
             @Override
