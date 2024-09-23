@@ -1,20 +1,12 @@
 package com.example.msdksample;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
-
 import android.Manifest;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -26,8 +18,12 @@ import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+
 import com.example.msdksample.callback.MGS28181Listener;
-import com.example.msdksample.entity.H264Frame;
 import com.example.msdksample.entity.Movement;
 import com.example.msdksample.utils.CameraControllerUtil;
 import com.example.msdksample.utils.FileUtil;
@@ -37,27 +33,9 @@ import com.gosuncn.lib28181agent.Jni28181AgentSDK;
 import com.gosuncn.lib28181agent.Log.LogToFile;
 import com.gosuncn.lib28181agent.Types;
 
-import org.jcodec.containers.mp4.boxes.Edit;
-
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import dji.sdk.keyvalue.key.CameraKey;
-import dji.sdk.keyvalue.key.KeyTools;
-import dji.sdk.keyvalue.value.camera.CameraMode;
-import dji.sdk.keyvalue.value.camera.VideoBitrateMode;
-import dji.sdk.keyvalue.value.camera.VideoResolutionFrameRate;
 import dji.sdk.keyvalue.value.common.ComponentIndexType;
-import dji.v5.common.callback.CommonCallbacks;
-import dji.v5.common.error.IDJIError;
-import dji.v5.manager.KeyManager;
 import dji.v5.manager.datacenter.MediaDataCenter;
 import dji.v5.manager.datacenter.camera.StreamInfo;
 import dji.v5.manager.interfaces.ICameraStreamManager;
@@ -67,16 +45,12 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
     private ImageButton btn_right = null;
     private DrawerLayout mDrawerLayout = null;
     private LinearLayout drawer_right = null;
+    private RelativeLayout llTouch;//屏幕点击
 
     private GS28181SDKManager manager = GS28181SDKManager.getInstance();
-    private CameraControllerUtil cameraControllerUtil = new CameraControllerUtil();
     private String TAG = getClass().getSimpleName();
-    private boolean isInitSDK, isRegisterSDK = false;
-    //    发送AR视频流时的横滚值等
-    boolean isSendStream = false;
     //    帧数据相关
     private ICameraStreamManager cameraManager = MediaDataCenter.getInstance().getCameraStreamManager();
-    Handler handler = new Handler(Looper.getMainLooper());//本来没private static 的，但是会内存泄漏
     private boolean continueSendVideo = false;
     private String absolutePath = Environment.getExternalStorageDirectory().getAbsolutePath();
     private int mimeType = 4;
@@ -100,22 +74,17 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
     long delay = 0;
     //相机索引
     private ComponentIndexType componentIndexType = ComponentIndexType.LEFT_OR_MAIN;
-    //    防抖相关
-    private float debounceThresholdPitch = 1.0f;
-    private float debounceThresholdYaw = 1.0f;
-    private float preFrameYaw = 0.0f;
-    private float preFramePitch = 0.0f;
-    //    水平和垂直的云台补偿
-    private volatile float compensateYaw = 0.0f;
-    private volatile float compensatePitch = 0.0f;
+
     private EditText editYaw;
     private EditText editPitch;
     private Button compensateBtn = null;
     private Boolean isCompensate = false;//是否开启补偿
     //    工具类
-    FileUtil fileUtil = new FileUtil();
-    private RelativeLayout llTouch;//屏幕点击
-
+    FileUtil fileUtil = FileUtil.getInstance();
+    private CameraControllerUtil cameraControllerUtil = CameraControllerUtil.getInstance();
+//    指点移动云台部分
+    int width;
+    int height;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -143,7 +112,7 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
         //初始化数据帧监听
         initReceiveStreamListener();
 //      降低码率和分辨率
-        setBitRate();
+        cameraControllerUtil.setBitRate();
 //        spinner
         initSpinner();
     }
@@ -153,9 +122,7 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
         btn_right = findViewById(R.id.btn_right);
         mDrawerLayout = findViewById(R.id.drawer_layout);
         drawer_right = findViewById(R.id.drawer_right);
-        // TODO: 2024/9/13  要延迟获取，不然空指针
-        preFramePitch = Float.parseFloat(Movement.getInstance().getGimbalPitch());
-        preFrameYaw = Float.parseFloat(Movement.getInstance().getGimbalYaw());
+
         spinner = findViewById(R.id.sendVedioStreamFun);
         sendVideoStreamBtn = findViewById(R.id.sendVideoStreamBtn);
         llTouch = findViewById(R.id.relative_layout);
@@ -163,7 +130,7 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
         editYaw = findViewById(R.id.et_yaw_compensation);//水平补偿输入
         editPitch = findViewById(R.id.et_pitch_compensation);//垂直补偿输入
         compensateBtn = findViewById(R.id.compensateBtn);
-        videoStreamThread.init(debounceThresholdPitch, debounceThresholdYaw);//初始化防抖阈值
+//        videoStreamThread.init(debounceThresholdPitch, debounceThresholdYaw);//初始化防抖阈值
 
         btn_right.setOnClickListener(this);
         sendVideoStreamBtn.setOnClickListener(this);
@@ -202,8 +169,7 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
         Movement.getInstance().setHeight(height);
     }
 
-    int width;
-    int height;
+
 
     public boolean onTouchEvent(MotionEvent event) {
         // 在这里判断一下如果是按下操作就获取坐标然后执行方法
@@ -261,43 +227,9 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
         });
      }
 
-    private void setBitRate() {
-        //        设置录像模式
-        KeyManager.getInstance().setValue(KeyTools.createKey(CameraKey.KeyCameraMode), CameraMode.VIDEO_NORMAL, null);
-//        设置镜头分辨率，降低分辨率
-        List<VideoResolutionFrameRate> VList = Movement.getInstance().getKeyVideoResolutionFrameRateRange();
-        Log.i(TAG, VList + "==============");
-//
-        VideoResolutionFrameRate v = VList.get(0);
-        KeyManager.getInstance().setValue(KeyTools.createKey(CameraKey.KeyVideoResolutionFrameRate), v, new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onSuccess() {
-                Log.i(TAG, "设置镜头分辨率和帧率成功：" + v);
-            }
-
-            @Override
-            public void onFailure(@NonNull IDJIError idjiError) {
-                Log.i(TAG, "设置镜头分辨率和帧率失败：" + idjiError);
-            }
-        });
-//        设置码率,降低码率
-        KeyManager.getInstance().setValue(KeyTools.createKey(CameraKey.KeyVideoBitrateMode), VideoBitrateMode.VBR, new CommonCallbacks.CompletionCallback() {
-            @Override
-            public void onSuccess() {
-                Log.i(TAG, "相机码率设置VBR成功");
-            }
-
-            @Override
-            public void onFailure(@NonNull IDJIError idjiError) {
-                Log.i(TAG, "相机码率设置VBR失败");
-            }
-        });
-    }
-
     //        initSDK,初始化和登录
     private void init_re_SDK() {
         int re1 = manager.initSDK(fileUtil.getLocalIpAddress());
-        isInitSDK = re1 == 0 ? true : false;
         Log.i(TAG, "initSDK:" + re1);
 
         LogToFile.init(this);
@@ -310,16 +242,16 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
         GS28181SDKManager.getInstance().setListenerServer(new MGS28181Listener());
     }
 
-    //计算PT
-    private void countPT(float pitch, float yaw, float debounceThresholdYaw, float debounceThresholdPitch) {
-        if (Math.abs(Math.abs(yaw) - Math.abs(this.preFrameYaw)) > debounceThresholdYaw) {
-            this.preFrameYaw = yaw;
-        }
-
-        if (Math.abs(Math.abs(pitch) - Math.abs(this.preFramePitch)) > debounceThresholdPitch) {
-            this.preFramePitch = pitch;
-        }
-    }
+//    //计算PT
+//    private void countPT(float pitch, float yaw, float debounceThresholdYaw, float debounceThresholdPitch) {
+//        if (Math.abs(Math.abs(yaw) - Math.abs(this.preFrameYaw)) > debounceThresholdYaw) {
+//            this.preFrameYaw = yaw;
+//        }
+//
+//        if (Math.abs(Math.abs(pitch) - Math.abs(this.preFramePitch)) > debounceThresholdPitch) {
+//            this.preFramePitch = pitch;
+//        }
+//    }
 
     //    创建数据帧监听
     private void initReceiveStreamListener() {
@@ -381,21 +313,14 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
                     startTime = System.currentTimeMillis();
                     Log.i(TAG, startTime + "-----发送的时间--开始");
 
-                    countPT(Float.parseFloat(Movement.getInstance().getGimbalPitch()),
+                    cameraControllerUtil.countPT(Float.parseFloat(Movement.getInstance().getGimbalPitch()),
                             Float.parseFloat(Movement.getInstance().getGimbalYaw()),
-                            debounceThresholdYaw, debounceThresholdPitch);
-                    //补偿值
-                    float comP = 0.0f;
-                    float comY = 0.0f;
-                    if (isCompensate){
-                        comP = compensatePitch;
-                        comY = compensateYaw;
-                    }
+                            cameraControllerUtil.debounceThresholdYaw, cameraControllerUtil.debounceThresholdPitch);
                     if (info.getMimeType() == ICameraStreamManager.MimeType.H264) {
                         int re = manager.sendVideoWithARInfo(System.currentTimeMillis(), info.isKeyFrame() ? 1 : FileUtil.getFrameType(data), data,
                                 Float.parseFloat(Movement.getInstance().getGimbalRoll()),
-                                preFramePitch + comP,
-                                preFrameYaw + comY,
+                                cameraControllerUtil.preFramePitch + cameraControllerUtil.compensatePitch,
+                                cameraControllerUtil.preFrameYaw + cameraControllerUtil.compensateYaw,
                                 Float.parseFloat(Movement.getInstance().getCurrentLongitude()),
                                 Float.parseFloat(Movement.getInstance().getCurrentLatitude()),
                                 Movement.getInstance().getCurrentAltitude());
@@ -409,8 +334,8 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
                     } else {
                         int re = manager.sendVideoWithARInfoH265(System.currentTimeMillis(), info.isKeyFrame() ? 1 : FileUtil.getFrameType(data), data,
                                 Float.parseFloat(Movement.getInstance().getGimbalRoll()),
-                                preFramePitch,
-                                preFrameYaw,
+                                cameraControllerUtil.preFramePitch + cameraControllerUtil.compensatePitch,
+                                cameraControllerUtil.preFrameYaw + cameraControllerUtil.compensateYaw,
                                 Float.parseFloat(Movement.getInstance().getCurrentLongitude()),
                                 Float.parseFloat(Movement.getInstance().getCurrentLatitude()),
                                 Movement.getInstance().getCurrentAltitude());
@@ -447,64 +372,52 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
             @Override
             public void onReceiveStream(@NonNull byte[] data, int offset, int length, @NonNull StreamInfo info) {
                 if (continueSendVideo && data != null) {
+                    fileUtil.enqueueFrameBuffer(data, data.length, info.isKeyFrame() ? 1 : FileUtil.getFrameType(data));
 
-                    startTime = System.currentTimeMillis();
-                    Log.i(TAG, startTime + "-----发送的时间--开始");
-                    Log.i(TAG, "用时多久多久多久===========" + (startTime - endTime) + "====时间:" + info.getPresentationTimeMs());
-                    countPT(Float.parseFloat(Movement.getInstance().getGimbalPitch()),
-                            Float.parseFloat(Movement.getInstance().getGimbalYaw()),
-                            debounceThresholdYaw, debounceThresholdPitch);
-                    //补偿值
-                    float comP = 0.0f;
-                    float comY = 0.0f;
-                    if (isCompensate){
-                        comP = compensatePitch;
-                        comY = compensateYaw;
-                    }
                     if (info.getMimeType() == ICameraStreamManager.MimeType.H264) {
-                        int re = manager.sendVideoWithARInfoX(System.currentTimeMillis(), info.isKeyFrame() ? 1 : FileUtil.getFrameType(data), data,
-                                Float.parseFloat(String.valueOf(Movement.getInstance().getCameraZoomRatios())),//double转float
-                                preFramePitch+comP, preFrameYaw+comY,
-                                Movement.getInstance().getAngleH(), Movement.getInstance().getAngleV(),
-                                Float.parseFloat(Movement.getInstance().getCurrentLongitude()),
-                                Float.parseFloat(Movement.getInstance().getCurrentLatitude()),
-                                Movement.getInstance().getCurrentAltitude());
-                        Log.i(TAG, "发送 视频流与 AR信息流 上传sendVideoWithARInfoX:" + re);
+                        mimeType = 4;
                     } else {
-                        int re = manager.sendVideoWithARInfoXH265(System.currentTimeMillis(), info.isKeyFrame() ? 1 : FileUtil.getFrameType(data), data,
-                                Float.parseFloat(String.valueOf(Movement.getInstance().getCameraZoomRatios())),//double转float
-                                preFramePitch+comP, preFrameYaw+comY,
-                                Movement.getInstance().getAngleH(), Movement.getInstance().getAngleV(),
-                                Float.parseFloat(Movement.getInstance().getCurrentLongitude()),
-                                Float.parseFloat(Movement.getInstance().getCurrentLatitude()),
-                                Movement.getInstance().getCurrentAltitude());
-                        Log.i(TAG, "发送 视频流与 AR信息流 上传sendVideoWithARInfoXH265:" + re);
+                        mimeType = 5;
                     }
 
-                    endTime = System.currentTimeMillis();
-                    Log.i(TAG, "发送的时间--结束-----" + endTime);
-//                    推太快就等待直到满足33ms推一帧，即30的帧率
-                    long delay = startTime - endTime;
-                    if (delay < 42) {
-                        Log.i(TAG, "推太快，用时-----" + delay);
-                        try {
-                            //将上一次的推流耗时近似当做下一次的耗时，也就是两帧之间是（40-delay）+下次网络推流用时delay，即保证每两帧间隔40ms
-                            Thread.sleep((long) 42 - delay);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
+//                    startTime = System.currentTimeMillis();
+//                    Log.i(TAG, startTime + "-----发送的时间--开始");
+//                    Log.i(TAG, "用时多久多久多久===========" + (startTime - endTime) + "====时间:" + info.getPresentationTimeMs());
+//                    countPT(Float.parseFloat(Movement.getInstance().getGimbalPitch()),
+//                            Float.parseFloat(Movement.getInstance().getGimbalYaw()),
+//                            debounceThresholdYaw, debounceThresholdPitch);
+//                    if (info.getMimeType() == ICameraStreamManager.MimeType.H264) {
+//                        int re = manager.sendVideoWithARInfoX(System.currentTimeMillis(), info.isKeyFrame() ? 1 : FileUtil.getFrameType(data), data,
+//                                Float.parseFloat(String.valueOf(Movement.getInstance().getCameraZoomRatios())),//double转float
+//                                preFramePitch+compensatePitch, preFrameYaw+compensateYaw,
+//                                Movement.getInstance().getAngleH(), Movement.getInstance().getAngleV(),
+//                                Float.parseFloat(Movement.getInstance().getCurrentLongitude()),
+//                                Float.parseFloat(Movement.getInstance().getCurrentLatitude()),
+//                                Movement.getInstance().getCurrentAltitude());
+//                        Log.i(TAG, "发送 视频流与 AR信息流 上传sendVideoWithARInfoX:" + re);
+//                    } else {
+//                        int re = manager.sendVideoWithARInfoXH265(System.currentTimeMillis(), info.isKeyFrame() ? 1 : FileUtil.getFrameType(data), data,
+//                                Float.parseFloat(String.valueOf(Movement.getInstance().getCameraZoomRatios())),//double转float
+//                                preFramePitch+compensatePitch, preFrameYaw+compensateYaw,
+//                                Movement.getInstance().getAngleH(), Movement.getInstance().getAngleV(),
+//                                Float.parseFloat(Movement.getInstance().getCurrentLongitude()),
+//                                Float.parseFloat(Movement.getInstance().getCurrentLatitude()),
+//                                Movement.getInstance().getCurrentAltitude());
+//                        Log.i(TAG, "发送 视频流与 AR信息流 上传sendVideoWithARInfoXH265:" + re);
+//                    }
 
-//                    curTime = System.currentTimeMillis();
-//                    if (curTime - lastTime>44 + delay){
-//                        startTime = System.currentTimeMillis();
-//                        Log.i(TAG, startTime + "-----发送的时间--开始");
-//                        Log.i(TAG,"用时多久多久多久==========="+(curTime-lastTime)+"====时间:"+info.getPresentationTimeMs());
-//                        cameraControllerUtil.sendVideoWithARInfoXFun(preFramePitch,preFrameYaw,data,info);
-//                        endTime = System.currentTimeMillis();
-//                        Log.i(TAG, "发送的时间--结束-----" + endTime);
-//                        delay = endTime - startTime;
-//                        lastTime = System.currentTimeMillis();
+//                    endTime = System.currentTimeMillis();
+//                    Log.i(TAG, "发送的时间--结束-----" + endTime);
+////                    推太快就等待直到满足33ms推一帧，即30的帧率
+//                    long delay = startTime - endTime;
+//                    if (delay < 42) {
+//                        Log.i(TAG, "推太快，用时-----" + delay);
+//                        try {
+//                            //将上一次的推流耗时近似当做下一次的耗时，也就是两帧之间是（40-delay）+下次网络推流用时delay，即保证每两帧间隔40ms
+//                            Thread.sleep((long) 42 - delay);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
 //                    }
                 } else {
                     if (continueSendVideo) {
@@ -593,6 +506,8 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
                     compensateBtn.setText(R.string.startCompensate);//设置为提示“开启补偿”的文字
                     editPitch.setEnabled(true);
                     editYaw.setEnabled(true);
+                    cameraControllerUtil.compensateYaw = 0.0f;//设置为0，不补偿
+                    cameraControllerUtil.compensatePitch=0.0f;
                     break;
                 }
                 if (editYaw.getText().toString().length() < 1 || editPitch.getText().toString().length() < 1){
@@ -603,8 +518,8 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
                 editPitch.setEnabled(false);
                 editYaw.setEnabled(false);
                 compensateBtn.setText(R.string.stopCompensate);//设置为提示“关闭补偿”的文字
-                compensateYaw = Float.parseFloat(editYaw.getText().toString());
-                compensatePitch = Float.parseFloat(editPitch.getText().toString());
+                cameraControllerUtil.compensateYaw = Float.parseFloat(editYaw.getText().toString());
+                cameraControllerUtil.compensatePitch = Float.parseFloat(editPitch.getText().toString());
                 break;
             case R.id.sendVideoStreamBtn:
                 if (continueSendVideo)//正在发流，点击结束发流
@@ -622,6 +537,7 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
                     fileUtil.onClear();//
                     break;
                 }
+                fileUtil.onClear();//开始发流前清空栈
                 //获取第一次发流的时间
                 lastTime = System.currentTimeMillis();
 //                设置按钮文字可以点击结束样式
@@ -669,6 +585,15 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
 //                      监听指定相机的帧数据
 //                      发送视频流
                         cameraManager.addReceiveStreamListener(componentIndexType, sendVideoWithARInfoXListener);
+                        //启动发流线程
+                        videoStreamThread.setStartListen(new VideoStreamThread.SendVideoStream() {
+                            @Override
+                            public void sendVideoStreamFun() {
+                                cameraControllerUtil.sendVideoWithARInfoXFun(mimeType);
+                            }
+                        });
+                        thread = new Thread(videoStreamThread);
+                        thread.start();
                         break;
                     case 3://sendVideoWithARInfoToLocal
                         if (continueSendVideo) {
@@ -685,7 +610,7 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
                         videoStreamThread.setStartListen(new VideoStreamThread.SendVideoStream() {
                             @Override
                             public void sendVideoStreamFun() {
-                                videoStreamThread.sendVideoWithARInfoToLocalFun(mimeType);
+                                cameraControllerUtil.sendVideoWithARInfoToLocalFun(mimeType);
                             }
                         });
                         thread = new Thread(videoStreamThread);
@@ -695,8 +620,6 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
                 break;
         }
     }
-
-
 
     @Override
     protected void onDestroy() {
@@ -715,10 +638,7 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
 //        cameraManager.removeCameraStreamSurface(surface.getHolder().getSurface());
 //        移除监听回调
         GS28181SDKManager.getInstance().setListenerServer(null);
-        //           将所有的Callbacks和Messages全部清除掉,移除Handler中所有的消息和回调，避免内存泄露
-        handler.removeCallbacksAndMessages(null);
-        handler = null;
-        fileUtil.onClear();
+        fileUtil.onDestroy();
     }
 
 

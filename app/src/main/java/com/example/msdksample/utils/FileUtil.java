@@ -13,6 +13,7 @@ import android.util.Log;
 import androidx.annotation.RequiresApi;
 
 import com.example.msdksample.entity.H264Frame;
+import com.example.msdksample.entity.Movement;
 import com.gosuncn.lib28181agent.Jni28181AgentSDK;
 import com.gosuncn.lib28181agent.Types;
 
@@ -41,6 +42,16 @@ public class FileUtil {
     private static final int B_FRAME = 3;
     private final static String TAG = "FileUtil";
 
+    private static class FileUtilHolder {
+        private static final FileUtil INSTANCE = new FileUtil();
+    }
+
+    private FileUtil() {
+    }
+
+    public static final FileUtil getInstance() {
+        return FileUtil.FileUtilHolder.INSTANCE;
+    }
     /**
      * 专为Android4.4设计的从Uri获取文件绝对路径，以前的方法已不好使
      */
@@ -356,12 +367,13 @@ public class FileUtil {
     private final int BUFFER_QUEUE_SIZE = 120;
     private BlockingQueue<H264Frame> frameQueue = new LinkedBlockingQueue<>(BUFFER_QUEUE_SIZE);
     // 帧数据缓存池，每次回调的大小基本为2032
-    private final int FRAME_BUFFER_SIZE = 1024 * 1024;   // 最大不能超过1024*1024（1M），当前申请150K
-    private final int FILE_BUFFER_SIZE = 1024 * 1024 * 30;
-    private ByteBuffer frameBuffer = ByteBuffer.allocate(FRAME_BUFFER_SIZE);
-    private ByteBuffer outputBuffer = null;
-    private AtomicInteger currentFrameType = new AtomicInteger(Types.I_FRAME);
-
+//    private final int FRAME_BUFFER_SIZE = 1024 * 1024;   // 最大不能超过1024*1024（1M），当前申请150K
+//    private final int FILE_BUFFER_SIZE = 1024 * 1024 * 30;
+//    private ByteBuffer frameBuffer = ByteBuffer.allocate(FRAME_BUFFER_SIZE);
+//    private ByteBuffer outputBuffer = null;
+//    private AtomicInteger currentFrameType = new AtomicInteger(Types.I_FRAME);
+    private int gopNum = 0;
+    private float gopDropPer = 24;
     public void enqueueFrameBuffer(byte[] bufferData, int size, int type) {
         // 校验接收到的videoBuffer，等待缓存池缓存到一帧再放到缓存队列
 //        if (frameBuffer == null || !isRtpRunning.get() || isDestory) {
@@ -376,7 +388,6 @@ public class FileUtil {
         h264Frame.setFrameData(data);
         h264Frame.setTimestamp(System.currentTimeMillis());
         h264Frame.setFrameType(type);
-
 
 //        frameQueue.add(h264Frame);
         if (!frameQueue.offer(h264Frame)) {
@@ -395,9 +406,14 @@ public class FileUtil {
             return null;
         }
         H264Frame currentFrame = frameQueue.poll();
+        if (currentFrame.getFrameType() == 1){
+            gopNum = 0;
+        }else {
+            gopNum++;
+        }
 //            每秒30帧，每帧间隔33ms，当前不是I帧且间隔超过33ms就丢掉当前帧
 //        long curTime = System.currentTimeMillis();
-//        if (Math.abs(currentFrame.getTimestamp() - curTime) > 33 && currentFrame.getFrameType() != 1) {//开始丢帧时后面的帧全部丢掉直到遇见下一个I帧
+//        if (Math.abs(currentFrame.getTimestamp() - curTime) > 1000 && currentFrame.getFrameType() != 1) {//开始丢帧时后面的帧全部丢掉直到遇见下一个I帧
 //            Log.i(TAG,"超时帧:"+currentFrame.getTimestamp()+"::::::"+curTime);
 //            while (true) {
 //                currentFrame = frameQueue.poll();
@@ -407,12 +423,30 @@ public class FileUtil {
 //                break;
 //            }
 //        }
+
+        if (frameQueue.size() > BUFFER_QUEUE_SIZE*0.8){//到了百分之八十要满了，每个GOP的最后五帧丢掉
+            gopDropPer = 22;
+        }else if (frameQueue.size() > BUFFER_QUEUE_SIZE*0.6){
+            gopDropPer = 24;
+        }else {//没大于百分之六十就不丢
+            gopDropPer = 300;
+        }
+        if (gopNum >gopDropPer){
+            while (frameQueue.peek().getFrameType() != 1){
+                frameQueue.poll();
+            }
+        }
         return currentFrame;
     }
 
     public void onClear() {
         if (frameQueue != null)
             frameQueue.clear();
+    }
+    public void onDestroy(){
+        if (frameQueue != null)
+            frameQueue.clear();
+            frameQueue = null;
     }
 
     // NAL单元类型
