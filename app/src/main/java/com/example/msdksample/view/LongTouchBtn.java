@@ -529,7 +529,7 @@ public class LongTouchBtn implements View.OnClickListener, View.OnTouchListener 
         }
     }
 
-    //结束
+    //结束，结束调用
     protected void onDestroy() {
         manager.uninitSDK();
         Jni28181AgentSDK.getInstance().unregister();

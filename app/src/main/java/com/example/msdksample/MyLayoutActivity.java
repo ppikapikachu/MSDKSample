@@ -482,8 +482,6 @@ public class MyLayoutActivity extends AppCompatActivity implements View.OnClickL
         };
     }
 
-
-
     //设置发流按钮可用状态
     private void setEnableSendStream() {
         spinner.setEnabled(!continueSendVideo);
